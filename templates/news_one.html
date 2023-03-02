@@ -21,9 +21,7 @@ News
         {% if not is_subscribersuser %}
 
             <button><a href="{% url 'subscribe' news.pk %}">Подписаться</a></button><br>Подписаться на новости в этой категории
-        {% else %}
 
-            <button><a href="{% url 'unsubscribe' news.pk %}">Отписаться</a></button><br>Отписаться от новостей в этой категории
         {% endif %}
 
 <hr>

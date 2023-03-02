@@ -7,7 +7,8 @@
 </head>
 <body>
 
-    <h2>Здравствуй, {{ appointment.user_name }}. Новая статья в твоем любимом разделе!</h2>
+    <h2>Здравствуй. Новая <a href="{{ link }}"> статья</a> в твоем любимом разделе!</h2>
+
     <p>{{ post.text_post|truncatechars:50}}</p>
 
 </body>

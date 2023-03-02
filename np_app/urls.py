@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import PostList, PostDetail, PostCreate, PostEdit, PostDelete, PostSearch, subscribe, \
-    unsubscribe
-#AppointmentView
+from .views import PostList, PostDetail, PostCreate, PostEdit, PostDelete, PostSearch, subscribe, CategoryListView
+#AppointmentView , unsubscribe
 
 urlpatterns = [
     path('', PostList.as_view(), name='post_list'),
@@ -15,7 +14,9 @@ urlpatterns = [
     path('articles/<int:pk>/delete/', PostDelete.as_view(), name='articles_delete'),
  #   path('mail/', AppointmentView.as_view(template_name='appointment_created.html') ,name='appointment'),
  #   path('appointments/', AppointmentView.as_view(template_name='make_appointment.html'), name='appointment'),
-    path('subscribe/<int:pk>', subscribe, name='subscribe'),
-    path('unsubscribe/<int:pk>', unsubscribe, name='unsubscribe'),
+ #   path('subscribe/<int:pk>', subscribe, name='subscribe'),
+ #   path('unsubscribe/<int:pk>', unsubscribe, name='unsubscribe'),
+    path('categories/<int:pk>', CategoryListView.as_view(), name='category_list'),
+    path('categories/<int:pk>/subscribe', subscribe, name='subscribe'),
 
 ]

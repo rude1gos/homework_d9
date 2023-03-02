@@ -2,16 +2,12 @@ from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
-from django.shortcuts import render, redirect
-from django.template.loader import render_to_string
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.core.mail import send_mail, EmailMultiAlternatives
 
-from .models import Post, Appointment, User, PostCategory
+
+from .models import Post, User, Category
 from .filters import PostFilter
 from .forms import PostForm
 
@@ -104,60 +100,48 @@ class PostDelete(DeleteView, LoginRequiredMixin, PermissionRequiredMixin):
     success_url = reverse_lazy('post_list')
     permission_required = ('post.delete_post')
 
+class CategoryListView(ListView):
+    model = Post
+    template_name = 'category_list.html'
+    context_object_name = 'category_news_list'
+
+    def get_queryset(self):
+        self.genre = get_object_or_404(Category, id=self.kwargs['pk'])
+        queryset = Post.objects.filter(category=self.genre).order_by('-time_create_post')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_not_subscriber'] = self.request.user not in self.genre.subscribers.all()
+        context['category'] = self.genre
+        return context
 
 @login_required
 def subscribe(request, pk):
-    user = User.objects.get(pk=request.user.id)
-    post = Post.objects.get(pk=pk)
-    category = post.category.all()
-    for cat in category:
-        if user not in cat.subscribers.all():
-            cat.subscribers.add(user)
-    return redirect('/news/')
+    user = request.user
+    category = Category.objects.get(id=pk)
+    category.subscribers.add(user)
 
+    message = 'Вы успешно подписались на рассылку новостей категорий'
+    return render(request, 'subscribe.html', {'category': category, 'message': message})
 
-@login_required
-def unsubscribe(request, pk):
-    user = User.objects.get(pk=request.user.id)
-    post = Post.objects.get(pk=pk)
-    category = post.category.all()
-    for cat in category:
-        if user in cat.subscribers.all():
-            cat.subscribers.remove(user)
-    return redirect('/news/')
-
-
-class AppointmentView(View):
-    template_name = 'appointment_created.html'
-
-    def get(self, request, *args, **kwargs):
-        return render(request, 'appointment_created.html', {})
-
-    @receiver(m2m_changed, sender=PostCategory)
-    def post(self, request, action, *args, **kwargs):
-        appointment = Appointment(
-        date=datetime.strptime(request.POST['date'], '%Y-%m-%d'),
-        user_name=request.POST['user_name'],
-        message=request.POST['message'],
-        )
-        appointment.save()
-        if action == 'post_add':
-            send_mail(
-                subject=f'{appointment.user_name}',
-                message=appointment.message,
-                from_email='rudeigos1995@yandex.ru',
-                recipient_list=['elizacat250795@gmail.com']
-                )
-
-            return redirect('appointments:make_appointment')
-
-
-#@receiver(m2m_changed, sender=PostCategory)
-#def post(request, instance, action, **kwargs):
-#    if action == 'post_add':
-#        send_mail(
-#            subject=f'Здравствуй, {request.user}. Новая статья в твоем любимом разделе!',
-#            message=f'{instance.text_post}',
-#            from_email='rudeigos1995@yandex.ru',
-#            recipient_list=['elizacat250795@gmail.com']
-#        )
+#@login_required
+#def subscribe(request, pk):
+#    user = User.objects.get(pk=request.user.id)
+#    post = Post.objects.get(pk=pk)
+#    category = post.category.all()
+#    for cat in category:
+#        if user not in cat.subscribers.all():
+#            cat.subscribers.add(user)
+#    return redirect('/news/')
+#
+#
+#@login_required
+#def unsubscribe(request, pk):
+#    user = User.objects.get(pk=request.user.id)
+#    post = Post.objects.get(pk=pk)
+#    category = post.category.all()
+#    for cat in category:
+#        if user in cat.subscribers.all():
+#            cat.subscribers.remove(user)
+#    return redirect('/news/')
