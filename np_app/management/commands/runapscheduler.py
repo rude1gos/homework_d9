@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-from NewsPortal.np_app.models import Post, Category
+from np_app.models import Post, Category
 from django.conf import settings
 
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 def my_job():
     today = datetime.datetime.now()
     last_week = today - datetime.timedelta(days=7)
-    posts = Post.objects.filter(time_in__gte=last_week)
-    categories = set(posts.values_list('category__category_name', flat=True))
+    posts = Post.objects.filter(time_create_post__gte=last_week)
+    categories = set(posts.values_list('category__genre', flat=True))
     subscribers = set(
-        Category.objects.filter(category_name__in=categories).values_list('subscribers__email', flat=True))
+        Category.objects.filter(genre__in=categories).values_list('subscribers__email', flat=True))
 
     html_content = render_to_string(
         'daily_post.html',
@@ -68,13 +68,13 @@ class Command(BaseCommand):
 
         scheduler.add_job(
             my_job,
-            trigger=CronTrigger(second=20),
+            trigger=CronTrigger(day_of_week="wed", hour="15", minute="00"),
             id="my_job",  # The `id` assigned to each job MUST be unique
             max_instances=1,
             replace_existing=True,
         )
         logger.info("Added job 'my_job'.")
-#day_of_week="wed", hour="15", minute="00"
+#second=20
         scheduler.add_job(
             delete_old_job_executions,
             trigger=CronTrigger(
